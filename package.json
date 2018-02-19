@@ -1,8 +1,9 @@
 {
     "name": "@solza/jsymbol",
-    "version": "1.0.0",
+    "version": "0.1",
     "description": "Data structures for symbols and symbol table to be used in compilers/interpreters. Written in TypeScript and can be used in TypeScript and JavaScript projects.",
     "main": "src/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
         "test": "jest"
@@ -11,11 +12,43 @@
         "type": "git",
         "url": "git+https://github.com/solzacode/jsymbol.git"
     },
-    "keywords": [],
+    "keywords": [
+        "symbol",
+        "table",
+        "symbol-table",
+        "symbols",
+        "symbol table",
+        "jsymbols",
+        "symbolsjs",
+        "ast",
+        "compiler",
+        "interface"
+    ],
     "author": "Charles Prakash Dasari <prakash@solza.io> (https://github.com/charlesprakash)",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/solzacode/jsymbol/issues"
     },
-    "homepage": "https://github.com/solzacode/jsymbol#readme"
+    "homepage": "https://github.com/solzacode/jsymbol#readme",
+    "devDependencies": {
+        "@types/jest": "^22.1.3",
+        "coveralls": "^3.0.0",
+        "jest": "^22.3.0",
+        "ts-jest": "^22.0.4",
+        "typescript": "^2.7.2"
+    },
+    "jest": {
+        "transform": {
+            "^.+\\.tsx?$": "ts-jest",
+            "^.+\\.ts?$": "ts-jest"
+        },
+        "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?|ts?|js?)$",
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js",
+            "jsx"
+        ],
+        "collectCoverage": true
+    }
 }

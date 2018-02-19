@@ -1,0 +1,4 @@
+.vscode/
+coverage/
+.travis.yml
+*.map
