@@ -4,19 +4,20 @@ export class AstSymbol<TExtra = {}, TType = any> {
 }
 
 export class SymbolTable<TSymbol = AstSymbol> {
+    symbols: Map<string, TSymbol>;
     parent?: SymbolTable<TSymbol>;
     keyFunc?: (s: TSymbol) => string;
 
-    constructor(
-        public symbols: Map<string, TSymbol> = new Map<string, TSymbol>(),
-        symbolKeyProvider?: (s: TSymbol) => string) {
-            if (symbolKeyProvider) {
-                this.keyFunc = symbolKeyProvider;
-            }
+    constructor(symbolKeyProvider?: (s: TSymbol) => string) {
+        this.symbols = new Map<string, TSymbol>();
+        if (symbolKeyProvider) {
+            this.keyFunc = symbolKeyProvider;
+        }
     }
 
     enterScope(): void {
-        let newParent: SymbolTable<TSymbol> = new SymbolTable<TSymbol>(this.symbols, this.keyFunc);
+        let newParent: SymbolTable<TSymbol> = new SymbolTable<TSymbol>(this.keyFunc);
+        newParent.symbols = this.symbols;
         newParent.parent = this.parent;
 
         this.parent = newParent;
@@ -57,7 +58,7 @@ export class SymbolTable<TSymbol = AstSymbol> {
     }
 
     add(key: string | TSymbol, value?: TSymbol): void {
-        value = value || <TSymbol> key;
+        value = value || (<TSymbol>key);
         key = this.getKey(key);
 
         if (this.localLookup(key)) {
@@ -71,5 +72,3 @@ export class SymbolTable<TSymbol = AstSymbol> {
         return typeof key === "string" ? key : (this.keyFunc ? this.keyFunc(key) : key.toString());
     }
 }
-
-export type AstSymbolTable = SymbolTable<AstSymbol>;
