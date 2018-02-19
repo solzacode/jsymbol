@@ -22,11 +22,29 @@ npm install jsymbol --save
 
 ## Usage
 
+### TypeScript
+
 ```typescript
 import { SymbolTable, AstSymbol } from "jsymbol";
 
 let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(s => s.identifier);
 let sym: AstSymbol = new AstSymbol("counter", "variable");   // symbol and its type
+
+st.add(sym);
+
+st.enterScope();
+// assert: st.lookup("counter") === sym;
+
+st.exitScope();
+```
+
+### JavaScript
+
+```javascript
+const jsymbol = require("jsymbol");
+
+let st = new jsymbol.SymbolTable(s => s.identifier);
+let sym = new jsymbol.AstSymbol("counter", "variable");
 
 st.add(sym);
 

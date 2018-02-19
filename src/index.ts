@@ -1,4 +1,6 @@
-export class AstSymbol<TExtra = {}, TType = any> {
+export class AstSymbol<TExtra = any, TType = any> {
+    extra?: TExtra;
+
     constructor(public identifier: string, public type?: TType, public parent?: AstSymbol<TExtra, TType>) {
     }
 }
