@@ -1,8 +1,8 @@
 {
     "name": "jsymbol",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Data structures for symbols and symbol table to be used in compilers/interpreters. Written in TypeScript and can be used in TypeScript and JavaScript projects.",
-    "main": "src/index.js",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
