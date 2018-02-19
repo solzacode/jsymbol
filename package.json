@@ -1,0 +1,21 @@
+{
+    "name": "@solza/jsymbol",
+    "version": "1.0.0",
+    "description": "Data structures for symbols and symbol table to be used in compilers/interpreters. Written in TypeScript and can be used in TypeScript and JavaScript projects.",
+    "main": "src/index.js",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/solzacode/jsymbol.git"
+    },
+    "keywords": [],
+    "author": "Charles Prakash Dasari <prakash@solza.io> (https://github.com/charlesprakash)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/solzacode/jsymbol/issues"
+    },
+    "homepage": "https://github.com/solzacode/jsymbol#readme"
+}
