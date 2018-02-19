@@ -1,6 +1,6 @@
 {
     "name": "@solza/jsymbol",
-    "version": "0.1",
+    "version": "0.1.0",
     "description": "Data structures for symbols and symbol table to be used in compilers/interpreters. Written in TypeScript and can be used in TypeScript and JavaScript projects.",
     "main": "src/index.js",
     "types": "dist/index.d.ts",
