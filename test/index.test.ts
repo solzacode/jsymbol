@@ -1,10 +1,23 @@
 import { SymbolTable, AstSymbol } from "../src/index";
 
+enum MySymbolType {
+    Class,
+    Interface
+}
+
+class MySymbol implements AstSymbol<MySymbolType> {
+    state: boolean;
+
+    constructor(public identifier: string, type: MySymbolType) {
+        this.state = false;
+    }
+}
+
 describe("Symbol table tests", () => {
-    let s: SymbolTable<string>;
+    let s: SymbolTable;
 
     beforeEach(() => {
-        s = new SymbolTable<string>();
+        s = new SymbolTable();
     });
 
     it("adds a new symbol", () => {
@@ -58,8 +71,8 @@ describe("Symbol table tests", () => {
     });
 
     it("can add and lookup symbol using AstSymbol structure", () => {
-        let sym: AstSymbol = new AstSymbol("someVariable");
-        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
+        let sym: AstSymbol = { identifier: "someVariable" };
+        let st: SymbolTable<AstSymbol> = new SymbolTable(symbol => symbol.identifier);
 
         st.add(sym);
         expect(st.lookup(sym)).toBe(sym);
@@ -85,7 +98,7 @@ describe("Symbol table tests", () => {
     });
 
     it("looks up AstSymbol from child scope", () => {
-        let sym: AstSymbol = new AstSymbol("someVariable");
+        let sym: AstSymbol = { identifier: "someVariable" };
         let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add(sym);
@@ -98,7 +111,7 @@ describe("Symbol table tests", () => {
     });
 
     it("add and lookup symbol with a key different from the symbol", () => {
-        let sym: AstSymbol = new AstSymbol("someVariable");
+        let sym: AstSymbol = { identifier: "someVariable" };
         let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add("s1", sym);
@@ -128,7 +141,7 @@ describe("Symbol table tests", () => {
     });
 
     it ("looks up AstSymbol added to global scope", () => {
-        let sym = new AstSymbol("someVar");
+        let sym = { identifier: "someVar" };
         let st = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.addToGlobalScope(sym);
@@ -138,5 +151,14 @@ describe("Symbol table tests", () => {
         expect(st.lookup("someVar")).toBe(sym);
         expect(st.localLookup(sym)).toBeUndefined();
         expect(st.localLookup("someVar")).toBeUndefined();
+    });
+
+    it ("works with custom symbol types", () => {
+        let sym = new MySymbol("string", MySymbolType.Class);
+        let st = new SymbolTable<MySymbol>(symbol => symbol.identifier);
+
+        st.add(sym);
+
+        expect(st.lookup("string")).toBe(sym);
     });
 });

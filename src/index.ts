@@ -1,11 +1,10 @@
-export class AstSymbol<TExtra = any, TType = any> {
-    extra?: TExtra;
-
-    constructor(public identifier: string, public type?: TType, public parent?: AstSymbol<TExtra, TType>) {
-    }
+export interface AstSymbol<TType = any> {
+    identifier: string;
+    type?: TType;
+    parent?: AstSymbol<TType>;
 }
 
-export class SymbolTable<TSymbol = AstSymbol> {
+export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
     symbols: Map<string, TSymbol>;
     keyFunc: (s: TSymbol) => string;
     parent?: SymbolTable<TSymbol>;
@@ -14,13 +13,13 @@ export class SymbolTable<TSymbol = AstSymbol> {
 
     constructor(symbolKeyProvider?: (s: TSymbol) => string) {
         this.symbols = new Map<string, TSymbol>();
-        this.keyFunc = symbolKeyProvider || (s => s.toString());
+        this.keyFunc = symbolKeyProvider || (s => s.identifier !== undefined ? s.identifier : s.toString());
 
         this._globalSymbols = this.symbols;
     }
 
     enterScope(): void {
-        let newParent: SymbolTable<TSymbol> = new SymbolTable<TSymbol>(this.keyFunc);
+        let newParent = new SymbolTable<TSymbol>(this.keyFunc);
         newParent.symbols = this.symbols;
         newParent.parent = this.parent;
         newParent._globalSymbols = this._globalSymbols;
