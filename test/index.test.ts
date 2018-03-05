@@ -59,7 +59,7 @@ describe("Symbol table tests", () => {
 
     it("can add and lookup symbol using AstSymbol structure", () => {
         let sym: AstSymbol = new AstSymbol("someVariable");
-        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(s => s.identifier);
+        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add(sym);
         expect(st.lookup(sym)).toBe(sym);
@@ -86,7 +86,7 @@ describe("Symbol table tests", () => {
 
     it("looks up AstSymbol from child scope", () => {
         let sym: AstSymbol = new AstSymbol("someVariable");
-        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(s => s.identifier);
+        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add(sym);
         expect(st.lookup(sym)).toBe(sym);
@@ -99,10 +99,44 @@ describe("Symbol table tests", () => {
 
     it("add and lookup symbol with a key different from the symbol", () => {
         let sym: AstSymbol = new AstSymbol("someVariable");
-        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(s => s.identifier);
+        let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add("s1", sym);
         expect(st.lookup("s1")).toBe(sym);
         expect(st.lookup(sym)).toBeUndefined();
+    });
+
+    it("add symbols to global scope from any scope and find them", () => {
+        s.addToGlobalScope("s1");
+        s.enterScope();
+        s.addToGlobalScope("s2");
+
+        expect(s.localLookup("s1")).toBeUndefined();
+        expect(s.lookup("s1")).toBe("s1");
+        expect(s.localLookup("s2")).toBeUndefined();
+        expect(s.lookup("s2")).toBe("s2");
+    });
+
+    it ("can't add duplicate symbols to global scope from any scope", () => {
+        s.enterScope();
+        s.addToGlobalScope("s1");
+        s.enterScope();
+
+        expect(() => {
+            s.addToGlobalScope("s1");
+        }).toThrow("Symbol s1 already found in global scope");
+    });
+
+    it ("looks up AstSymbol added to global scope", () => {
+        let sym = new AstSymbol("someVar");
+        let st = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
+
+        st.addToGlobalScope(sym);
+        st.enterScope();
+
+        expect(st.lookup(sym)).toBe(sym);
+        expect(st.lookup("someVar")).toBe(sym);
+        expect(st.localLookup(sym)).toBeUndefined();
+        expect(st.localLookup("someVar")).toBeUndefined();
     });
 });

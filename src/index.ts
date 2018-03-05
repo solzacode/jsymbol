@@ -7,20 +7,23 @@ export class AstSymbol<TExtra = any, TType = any> {
 
 export class SymbolTable<TSymbol = AstSymbol> {
     symbols: Map<string, TSymbol>;
+    keyFunc: (s: TSymbol) => string;
     parent?: SymbolTable<TSymbol>;
-    keyFunc?: (s: TSymbol) => string;
+
+    private _globalSymbols: Map<string, TSymbol>;
 
     constructor(symbolKeyProvider?: (s: TSymbol) => string) {
         this.symbols = new Map<string, TSymbol>();
-        if (symbolKeyProvider) {
-            this.keyFunc = symbolKeyProvider;
-        }
+        this.keyFunc = symbolKeyProvider || (s => s.toString());
+
+        this._globalSymbols = this.symbols;
     }
 
     enterScope(): void {
         let newParent: SymbolTable<TSymbol> = new SymbolTable<TSymbol>(this.keyFunc);
         newParent.symbols = this.symbols;
         newParent.parent = this.parent;
+        newParent._globalSymbols = this._globalSymbols;
 
         this.parent = newParent;
         this.symbols = new Map<string, TSymbol>();
@@ -36,31 +39,16 @@ export class SymbolTable<TSymbol = AstSymbol> {
     }
 
     localLookup(key: string | TSymbol): TSymbol | undefined {
-        let keyToLookup: string = this.getKey(key);
-        if (this.symbols.has(keyToLookup)) {
-            return this.symbols.get(keyToLookup);
-        }
-
-        return undefined;
+        return this.symbols.get(this.getKey(key));
     }
 
     lookup(key: string | TSymbol): TSymbol | undefined {
         let keyToLookup: string = this.getKey(key);
-        let current: SymbolTable<TSymbol> | undefined = this;
-        let found: TSymbol | undefined = undefined;
-
-        while (current && !found) {
-            found = current.localLookup(keyToLookup);
-            if (!found) {
-                current = current.parent;
-            }
-        }
-
-        return found;
+        return this.localLookup(keyToLookup) || (this.parent ? this.parent.lookup(keyToLookup) : undefined);
     }
 
     add(key: string | TSymbol, value?: TSymbol): void {
-        value = value || (<TSymbol>key);
+        value = value || (<TSymbol> key);
         key = this.getKey(key);
 
         if (this.localLookup(key)) {
@@ -70,7 +58,22 @@ export class SymbolTable<TSymbol = AstSymbol> {
         this.symbols.set(key, value);
     }
 
+    addToGlobalScope(key: string | TSymbol, value?: TSymbol): void {
+        value = value || (<TSymbol> key);
+        key = this.getKey(key);
+
+        if (this.globalLookup(key)) {
+            throw Error(`Symbol ${key} already found in global scope`);
+        }
+
+        this._globalSymbols.set(key, value);
+    }
+
+    private globalLookup(key: string | TSymbol): TSymbol | undefined {
+        return this._globalSymbols.get(this.getKey(key));
+    }
+
     private getKey(key: string | TSymbol): string {
-        return typeof key === "string" ? key : (this.keyFunc ? this.keyFunc(key) : key.toString());
+        return typeof key === "string" ? key : this.keyFunc(key);
     }
 }
