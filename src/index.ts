@@ -68,6 +68,19 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         this._globalSymbols.set(key, value);
     }
 
+    *[Symbol.iterator]() {
+        for (let sym of this.symbols.values()) {
+            yield sym;
+        }
+
+        if (this.parent) {
+            let gen: Iterable<TSymbol> = this.parent[Symbol.iterator]();
+            if (gen) {
+                yield *gen;
+            }
+        }
+    }
+
     private globalLookup(key: string | TSymbol): TSymbol | undefined {
         return this._globalSymbols.get(this.getKey(key));
     }

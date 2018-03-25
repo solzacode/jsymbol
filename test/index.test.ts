@@ -161,4 +161,36 @@ describe("Symbol table tests", () => {
 
         expect(st.lookup("string")).toBe(sym);
     });
+
+    it ("exposes an iterator", () => {
+        s.add("s1");
+        s.add("s2");
+
+        let symbols = [];
+        for (let symbol of s) {
+            symbols.push(symbol);
+        }
+
+        expect(symbols.length).toBe(2);
+        expect(symbols.findIndex(v => v === "s1")).toBeGreaterThanOrEqual(0);
+        expect(symbols.findIndex(v => v === "s2")).toBeGreaterThanOrEqual(0);
+    });
+
+    it("can iterate across scopes", () => {
+        s.add("s1");
+        s.enterScope();
+        s.add("s2");
+        s.enterScope();
+        s.addToGlobalScope("s3");
+
+        let symbols = [];
+        for (let symbol of s) {
+            symbols.push(symbol);
+        }
+
+        expect(symbols.length).toBe(3);
+        expect(symbols.findIndex(v => v === "s1")).toBeGreaterThanOrEqual(0);
+        expect(symbols.findIndex(v => v === "s2")).toBeGreaterThanOrEqual(0);
+        expect(symbols.findIndex(v => v === "s3")).toBeGreaterThanOrEqual(0);
+    });
 });
