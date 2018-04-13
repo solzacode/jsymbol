@@ -68,7 +68,7 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         this._globalSymbols.set(key, value);
     }
 
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): IterableIterator<TSymbol> {
         for (let sym of this.symbols.values()) {
             yield sym;
         }
