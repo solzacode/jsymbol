@@ -57,11 +57,11 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
     }
 
     add(key: string | TSymbol, value?: TSymbol): void {
-        this.addSymbol(key, value, this.localLookup, (k, v) => this.symbols.set(k, [v]));
+        this.addSymbol(key, value, this.symbols);
     }
 
     addToGlobalScope(key: string | TSymbol, value?: TSymbol): void {
-        this.addSymbol(key, value, this.globalLookup, (k, v) => this._globalSymbols.set(k, [v]));
+        this.addSymbol(key, value, this._globalSymbols);
     }
 
     *[Symbol.iterator](): IterableIterator<TSymbol> {
@@ -75,10 +75,6 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
                 yield *gen;
             }
         }
-    }
-
-    private globalLookup: SymbolLookupMethod<TSymbol> = (key, type = undefined, parent = undefined) => {
-        return this.lookupInternal(this._globalSymbols, key, type, parent);
     }
 
     private getKey(key: string | TSymbol): string {
@@ -96,7 +92,7 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
 
         if (matchedSymbols && matchedSymbols.length) {
             for (let s of matchedSymbols) {
-                if (s.type === type && s.parent === parent) {
+                if ((type === undefined || s.type === type) && (parent === undefined || s.parent === parent)) {
                     result.push(s);
                 }
             }
@@ -105,30 +101,25 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         return (result && result.length) ? result : undefined;
     }
 
-    private addSymbol(
-        key: string | TSymbol,
-        value: TSymbol | undefined,
-        lookup: SymbolLookupMethod<TSymbol>,
-        setter: (key: string, value: TSymbol) => void
-    ) {
+    private addSymbol(key: string | TSymbol, value: TSymbol | undefined, map: Map<string, TSymbol[]>) {
         value = value || (<TSymbol> key);
         key = this.getKey(key);
 
-        let result = lookup(key, value.type, (<TSymbol> value.parent));
-        if (result && result.length !== 0) {
-            if (!value.type && !value.parent) {
+        let matchedSymbols = map.get(key);
+        if (matchedSymbols) {
+            if (!this.allowDuplicates) {
                 throw Error(`Symbol ${key} already found in desired scope`);
             }
 
-            for (let s of result) {
+            for (let s of matchedSymbols) {
                 if (s.type === value.type && s.parent === value.parent) {
                     throw Error(`Symbol ${key} already found in desired scope`);
                 }
             }
 
-            result.push(value);
+            matchedSymbols.push(value);
+        } else {
+            map.set(key, [value]);
         }
-
-        setter(key, value);
     }
 }

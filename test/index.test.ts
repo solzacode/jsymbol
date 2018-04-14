@@ -193,4 +193,86 @@ describe("Symbol table tests", () => {
         expect(symbols.findIndex(v => v === "s2")).toBeGreaterThanOrEqual(0);
         expect(symbols.findIndex(v => v === "s3")).toBeGreaterThanOrEqual(0);
     });
+
+    it("can add duplicate symbols with different types", () => {
+        let sym1: AstSymbol = { identifier: "myVar", type: "var" };
+        let sym2: AstSymbol = { identifier: "myVar", type: "func" };
+
+        s.add(sym1);
+        s.add(sym2);
+
+        expect(s.lookup("myVar")).toEqual([sym1, sym2]);
+    });
+
+    it("can add duplicate symbols with different parents", () => {
+        let sym1: AstSymbol = { identifier: "myVar" };
+        let sym2: AstSymbol = { identifier: "myVar", parent: sym1 };
+
+        s.add(sym1);
+        s.add(sym2);
+
+        expect(s.lookup("myVar")).toEqual([sym1, sym2]);
+    });
+
+    it("cannot add duplicate symbols with different types when allowDuplicates is set to false", () => {
+        let st: SymbolTable = new SymbolTable();
+        st.allowDuplicates = false;
+
+        let sym1: AstSymbol = { identifier: "myVar", type: "var" };
+        let sym2: AstSymbol = { identifier: "myVar", type: "func" };
+
+        st.add(sym1);
+
+        expect(() => {
+            st.add(sym2);
+        }).toThrow("Symbol myVar already found in desired scope");
+    });
+
+    it("looks up the right symbol based on type", () => {
+        let sym1: AstSymbol = { identifier: "myVar", type: "var" };
+        let sym2: AstSymbol = { identifier: "myVar", type: "func" };
+
+        s.add(sym1);
+        s.add(sym2);
+
+        expect(s.lookup("myVar", "var")).toEqual([sym1]);
+        expect(s.lookup("myVar", "func")).toEqual([sym2]);
+    });
+
+    it("looks up the right symbol based on parent", () => {
+        let sym0: AstSymbol = { identifier: "myVar", type: "class" };
+        let sym1: AstSymbol = { identifier: "myVar", type: "func", parent: sym0 };
+        let sym2: AstSymbol = { identifier: "myVar", type: "var", parent: sym1 };
+
+        s.add(sym0);
+        s.add(sym1);
+        s.add(sym2);
+
+        expect(s.lookup("myVar", undefined, sym0)).toEqual([sym1]);
+        expect(s.lookup("myVar", undefined, sym1)).toEqual([sym2]);
+    });
+
+    it("can iterate multiple symbols across scopes", () => {
+        s.enterScope();
+        s.add({ identifier: "myVar", type: "class" });
+        s.add({ identifier: "myVar", type: "func" });
+        s.add({ identifier: "myVar", type: "var" });
+
+        s.enterScope();
+        s.add({ identifier: "myVar", type: "class" });
+        s.add({ identifier: "myVar", type: "func" });
+        s.add({ identifier: "myVar", type: "var" });
+
+        s.enterScope();
+        s.add({ identifier: "myVar", type: "class" });
+        s.add({ identifier: "myVar", type: "func" });
+        s.add({ identifier: "myVar", type: "var" });
+
+        let syms: AstSymbol[] = [];
+        for (let st of s) {
+            syms.push(st);
+        }
+
+        expect(syms.length).toBe(9);
+    });
 });
