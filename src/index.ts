@@ -4,16 +4,22 @@ export interface AstSymbol<TType = any> {
     parent?: AstSymbol<TType>;
 }
 
+export interface SymbolLookupMethod<TSymbol extends AstSymbol = AstSymbol> {
+    (key: string | TSymbol, type?: any, parent?: TSymbol | undefined): TSymbol[] | undefined;
+}
+
 export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
-    symbols: Map<string, TSymbol>;
+    symbols: Map<string, TSymbol[]>;
     keyFunc: (s: TSymbol) => string;
     parent?: SymbolTable<TSymbol>;
+    allowDuplicates: boolean;
 
-    private _globalSymbols: Map<string, TSymbol>;
+    private _globalSymbols: Map<string, TSymbol[]>;
 
     constructor(symbolKeyProvider?: (s: TSymbol) => string) {
-        this.symbols = new Map<string, TSymbol>();
+        this.symbols = new Map<string, TSymbol[]>();
         this.keyFunc = symbolKeyProvider || (s => s.identifier !== undefined ? s.identifier : s.toString());
+        this.allowDuplicates = true;
 
         this._globalSymbols = this.symbols;
     }
@@ -25,7 +31,7 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         newParent._globalSymbols = this._globalSymbols;
 
         this.parent = newParent;
-        this.symbols = new Map<string, TSymbol>();
+        this.symbols = new Map<string, TSymbol[]>();
     }
 
     exitScope(): void {
@@ -37,40 +43,30 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         this.parent = this.parent.parent;
     }
 
-    localLookup(key: string | TSymbol): TSymbol | undefined {
-        return this.symbols.get(this.getKey(key));
+    localLookup: SymbolLookupMethod<TSymbol> = (key, type = undefined, parent = undefined) => {
+        return this.lookupInternal(this.symbols, key, type, parent);
     }
 
-    lookup(key: string | TSymbol): TSymbol | undefined {
+    lookup: SymbolLookupMethod<TSymbol> = (key, type = undefined, parent = undefined) => {
         let keyToLookup: string = this.getKey(key);
-        return this.localLookup(keyToLookup) || (this.parent ? this.parent.lookup(keyToLookup) : undefined);
+
+        let result = this.localLookup(keyToLookup, type, parent);
+        return (result && result.length)
+            ? result
+            : (this.parent ? this.parent.lookup(keyToLookup, type, parent) : undefined);
     }
 
     add(key: string | TSymbol, value?: TSymbol): void {
-        value = value || (<TSymbol> key);
-        key = this.getKey(key);
-
-        if (this.localLookup(key)) {
-            throw Error(`Symbol ${key} already found in local scope`);
-        }
-
-        this.symbols.set(key, value);
+        this.addSymbol(key, value, this.localLookup, (k, v) => this.symbols.set(k, [v]));
     }
 
     addToGlobalScope(key: string | TSymbol, value?: TSymbol): void {
-        value = value || (<TSymbol> key);
-        key = this.getKey(key);
-
-        if (this.globalLookup(key)) {
-            throw Error(`Symbol ${key} already found in global scope`);
-        }
-
-        this._globalSymbols.set(key, value);
+        this.addSymbol(key, value, this.globalLookup, (k, v) => this._globalSymbols.set(k, [v]));
     }
 
     *[Symbol.iterator](): IterableIterator<TSymbol> {
         for (let sym of this.symbols.values()) {
-            yield sym;
+            yield *sym;
         }
 
         if (this.parent) {
@@ -81,11 +77,58 @@ export class SymbolTable<TSymbol extends AstSymbol = AstSymbol> {
         }
     }
 
-    private globalLookup(key: string | TSymbol): TSymbol | undefined {
-        return this._globalSymbols.get(this.getKey(key));
+    private globalLookup: SymbolLookupMethod<TSymbol> = (key, type = undefined, parent = undefined) => {
+        return this.lookupInternal(this._globalSymbols, key, type, parent);
     }
 
     private getKey(key: string | TSymbol): string {
         return typeof key === "string" ? key : this.keyFunc(key);
+    }
+
+    private lookupInternal(
+        map: Map<string, TSymbol[]>,
+        key: TSymbol | string,
+        type: any = undefined,
+        parent: TSymbol | undefined = undefined
+    ): TSymbol[] | undefined {
+        let matchedSymbols = map.get(this.getKey(key));
+        let result: TSymbol[] | undefined = [];
+
+        if (matchedSymbols && matchedSymbols.length) {
+            for (let s of matchedSymbols) {
+                if (s.type === type && s.parent === parent) {
+                    result.push(s);
+                }
+            }
+        }
+
+        return (result && result.length) ? result : undefined;
+    }
+
+    private addSymbol(
+        key: string | TSymbol,
+        value: TSymbol | undefined,
+        lookup: SymbolLookupMethod<TSymbol>,
+        setter: (key: string, value: TSymbol) => void
+    ) {
+        value = value || (<TSymbol> key);
+        key = this.getKey(key);
+
+        let result = lookup(key, value.type, (<TSymbol> value.parent));
+        if (result && result.length !== 0) {
+            if (!value.type && !value.parent) {
+                throw Error(`Symbol ${key} already found in desired scope`);
+            }
+
+            for (let s of result) {
+                if (s.type === value.type && s.parent === value.parent) {
+                    throw Error(`Symbol ${key} already found in desired scope`);
+                }
+            }
+
+            result.push(value);
+        }
+
+        setter(key, value);
     }
 }

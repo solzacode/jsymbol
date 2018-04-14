@@ -29,7 +29,7 @@ describe("Symbol table tests", () => {
         expect(() => {
             s.add("someVariable");
             s.add("someVariable");
-        }).toThrow("Symbol someVariable already found in local scope");
+        }).toThrow("Symbol someVariable already found in desired scope");
     });
 
     it("allows adding same symbol in different scopes", () => {
@@ -41,7 +41,7 @@ describe("Symbol table tests", () => {
 
     it("looks up symbol just added", () => {
         s.add("someVariable");
-        expect(s.lookup("someVariable")).toBe("someVariable");
+        expect(s.lookup("someVariable")).toEqual(["someVariable"]);
     });
 
     it("local lookup of symbol added in parent scope won't resolve", () => {
@@ -51,20 +51,20 @@ describe("Symbol table tests", () => {
         expect(s.localLookup("someVariable")).toBeUndefined();
 
         s.exitScope();
-        expect(s.localLookup("someVariable")).toBe("someVariable");
+        expect(s.localLookup("someVariable")).toEqual(["someVariable"]);
     });
 
     it("finds a symbol added in parent scope from a child scope", () => {
         s.add("someVariable");
         s.enterScope();
 
-        expect(s.lookup("someVariable")).toBe("someVariable");
+        expect(s.lookup("someVariable")).toEqual(["someVariable"]);
     });
 
     it("cannot find symbol added in child scope from parent scope", () => {
         s.enterScope();
         s.add("someVariable");
-        expect(s.lookup("someVariable")).toBe("someVariable");
+        expect(s.lookup("someVariable")).toEqual(["someVariable"]);
 
         s.exitScope();
         expect(s.lookup("someVariable")).toBeUndefined();
@@ -75,8 +75,8 @@ describe("Symbol table tests", () => {
         let st: SymbolTable<AstSymbol> = new SymbolTable(symbol => symbol.identifier);
 
         st.add(sym);
-        expect(st.lookup(sym)).toBe(sym);
-        expect(st.lookup(sym).identifier).toBe("someVariable");
+        expect(st.lookup(sym)).toEqual([sym]);
+        expect(st.lookup(sym)[0].identifier).toEqual("someVariable");
     });
 
     it("cannot exit from root scope", () => {
@@ -92,9 +92,9 @@ describe("Symbol table tests", () => {
         s.enterScope();
 
         expect(s.localLookup("s2")).toBeUndefined();
-        expect(s.lookup("s2")).toBe("s2");
+        expect(s.lookup("s2")).toEqual(["s2"]);
         expect(s.localLookup("s1")).toBeUndefined();
-        expect(s.lookup("s1")).toBe("s1");
+        expect(s.lookup("s1")).toEqual(["s1"]);
     });
 
     it("looks up AstSymbol from child scope", () => {
@@ -102,12 +102,12 @@ describe("Symbol table tests", () => {
         let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add(sym);
-        expect(st.lookup(sym)).toBe(sym);
-        expect(st.lookup(sym).identifier).toBe("someVariable");
+        expect(st.lookup(sym)).toEqual([sym]);
+        expect(st.lookup(sym)[0].identifier).toBe("someVariable");
 
         st.enterScope();
         expect(st.localLookup(sym)).toBeUndefined();
-        expect(st.lookup(sym)).toBe(sym);
+        expect(st.lookup(sym)).toEqual([sym]);
     });
 
     it("add and lookup symbol with a key different from the symbol", () => {
@@ -115,7 +115,7 @@ describe("Symbol table tests", () => {
         let st: SymbolTable<AstSymbol> = new SymbolTable<AstSymbol>(symbol => symbol.identifier);
 
         st.add("s1", sym);
-        expect(st.lookup("s1")).toBe(sym);
+        expect(st.lookup("s1")).toEqual([sym]);
         expect(st.lookup(sym)).toBeUndefined();
     });
 
@@ -125,9 +125,9 @@ describe("Symbol table tests", () => {
         s.addToGlobalScope("s2");
 
         expect(s.localLookup("s1")).toBeUndefined();
-        expect(s.lookup("s1")).toBe("s1");
+        expect(s.lookup("s1")).toEqual(["s1"]);
         expect(s.localLookup("s2")).toBeUndefined();
-        expect(s.lookup("s2")).toBe("s2");
+        expect(s.lookup("s2")).toEqual(["s2"]);
     });
 
     it ("can't add duplicate symbols to global scope from any scope", () => {
@@ -137,7 +137,7 @@ describe("Symbol table tests", () => {
 
         expect(() => {
             s.addToGlobalScope("s1");
-        }).toThrow("Symbol s1 already found in global scope");
+        }).toThrow("Symbol s1 already found in desired scope");
     });
 
     it ("looks up AstSymbol added to global scope", () => {
@@ -147,8 +147,8 @@ describe("Symbol table tests", () => {
         st.addToGlobalScope(sym);
         st.enterScope();
 
-        expect(st.lookup(sym)).toBe(sym);
-        expect(st.lookup("someVar")).toBe(sym);
+        expect(st.lookup(sym)).toEqual([sym]);
+        expect(st.lookup("someVar")).toEqual([sym]);
         expect(st.localLookup(sym)).toBeUndefined();
         expect(st.localLookup("someVar")).toBeUndefined();
     });
@@ -159,7 +159,7 @@ describe("Symbol table tests", () => {
 
         st.add(sym);
 
-        expect(st.lookup("string")).toBe(sym);
+        expect(st.lookup("string")).toEqual([sym]);
     });
 
     it ("exposes an iterator", () => {
